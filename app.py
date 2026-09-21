@@ -4,10 +4,12 @@ import os
 app = Flask(__name__)
 
 # --- قائمة احتياطية اذا Supabase ما كاينش ---
+# وزيد في FALLBACK_PRODUCTS رابط صورة باش تجرب:
 FALLBACK_PRODUCTS = [
-    {"id": 1, "name": "حذاء عصري", "price": 4500, "description": "متوفر جميع المقاسات"},
-    {"id": 2, "name": "كسوة تقليدية", "price": 7500, "description": "صناعة تقليدية"},
+    {"id": 1, "name": "حذاء عصري", "price": 4500, "description": "متوفر جميع المقاسات", "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"},
+    {"id": 2, "name": "كسوة تقليدية", "price": 7500, "description": "صناعة تقليدية", "image_url": "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400"},
 ]
+"""
 
 # --- نحاولو نربطو بـ Supabase ---
 supabase = None
@@ -63,31 +65,31 @@ def delete_product_db(pid):
 ADMIN_PASSWORD = "matdjar123"
 
 STORE_TEMPLATE = """
-<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<style>body{font-family:sans-serif;padding:15px} .card{border:1px solid #ddd;padding:10px;margin:10px 0;border-radius:8px}</style></head><body>
-<h1>🛍️ متجر mat_djar</h1>
-<p>{% if supabase_status %}✅ مربوط بقاعدة البيانات{% else %}⚠️ يخدم بالقائمة المؤقتة{% endif %}</p>
+<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:sans-serif;background:#f5f5f5;margin:0;padding:10px}
+.header{background:white;padding:15px;text-align:center;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 5px #0001}
+.card{background:white;border-radius:12px;overflow:hidden;margin-bottom:15px;box-shadow:0 2px 8px #0002}
+.card img{width:100%;height:220px;object-fit:cover;background:#eee}
+.card-body{padding:12px}
+.price{color:#00a859;font-weight:bold;font-size:18px}
+.btn{display:block;background:#25D366;color:white;text-align:center;padding:12px;border-radius:8px;text-decoration:none;margin-top:10px;font-weight:bold}
+.badge{text-align:center;padding:8px;background:#fff3cd;border-radius:8px;margin-bottom:10px}
+</style></head><body>
+<div class="header"><h1 style="margin:0">🛍️ mat_djar متجر</h1></div>
+<div class="badge">{% if supabase_status %}✅ مربوط بقاعدة البيانات{% else %}⚠️ يخدم بالقائمة المؤقتة{% endif %}</div>
 {% for p in products %}
-<div class="card"><h3>{{ p['name'] }}</h3><p>{{ p['price'] }} دج</p><p>{{ p['description'] }}</p></div>
+<div class="card">
+  <img src="{{ p.get('image_url') or 'https://via.placeholder.com/400x300?text=mat_djar' }}">
+  <div class="card-body">
+    <h3 style="margin:5px 0">{{ p['name'] }}</h3>
+    <p style="color:#666;margin:5px 0">{{ p['description'] }}</p>
+    <div class="price">{{ p['price'] }} دج</div>
+    <a class="btn" href="https://wa.me/213XXXXXXXXX?text=سلام، حبيت نكوموندي {{ p['name'] }} - {{ p['price'] }} دج" target="_blank">📲 اطلب عبر واتساب</a>
+  </div>
+</div>
 {% endfor %}
-<a href="/admin?password=matdjar123">دخول الادارة</a>
-</body></html>
-"""
-
-ADMIN_TEMPLATE = """
-<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>
-<h1>لوحة التحكم</h1>
-<p>{% if supabase_status %}✅ Supabase يخدم - السلعة تبقى محفوظة{% else %}⚠️ انت تخدم بالقائمة - السلعة تروح كي يطفي السيرفر{% endif %}</p>
-<form method="post" action="/admin/add?password={{ pwd }}">
-  <input name="name" placeholder="اسم المنتج" required>
-  <input name="price" type="number" placeholder="السعر" required>
-  <input name="description" placeholder="الوصف">
-  <button>زيد</button>
-</form><hr>
-{% for p in products %}
-<div>{{ p['name'] }} - {{ p['price'] }} دج <a href="/admin/delete/{{ p['id'] }}?password={{ pwd }}" style="color:red">[حذف]</a></div>
-{% endfor %}
-<br><a href="/">رجوع للمتجر</a>
+<div style="text-align:center;margin:20px"><a href="/admin?password=matdjar123">دخول الادارة</a></div>
 </body></html>
 """
 
