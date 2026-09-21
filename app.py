@@ -1,75 +1,79 @@
-
-from flask import Flask, request, redirect
+from flask import Flask, render_template_string, request, redirect, url_for
+from supabase import create_client
 import os
 
 app = Flask(__name__)
 
-products = [
-    {"id": 1, "name": "كسوة تقليدية", "price": "3500 دج", "emoji": "👗"},
-    {"id": 2, "name": "حذاء عصري", "price": "4500 دج", "emoji": "👟"},
-]
+# --- 1. الربط مع Supabase ---
+# هذو راح تحطهم في Render كيما نقولك لتحت
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://YOUR-PROJECT.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "YOUR-KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def page_html():
-    cards = ""
-    for p in products:
-        cards += f"""
-        <div style="background:white;border-radius:15px;padding:12px">
-            <div style="width:100%;height:150px;background:#eee;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:50px">{p['emoji']}</div>
-            <h4 style="margin-top:10px">{p['name']}</h4>
-            <div style="color:#666;margin-top:5px">{p['price']}</div>
-            <button style="width:100%;margin-top:10px;background:black;color:white;border:none;padding:10px;border-radius:20px">اضافة للسلة</button>
-        </div>
-        """
-    return f"""
-    <!DOCTYPE html>
-    <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>mat_djar</title></head>
-    <body style="margin:0;background:#f5f5f5;font-family:Tahoma">
-        <div style="background:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center"><h1>mat_djar 🛍️</h1><a href="/admin" style="background:black;color:white;padding:10px 18px;border-radius:25px;text-decoration:none">ادارة المتجر</a></div>
-        <div style="margin:20px;background:black;color:white;border-radius:20px;padding:30px;text-align:center"><h2>مرحبا بكم</h2><p>المتجر رجع يمشي - عندنا {len(products)} منتجات</p></div>
-        <div style="padding:0 20px 40px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">{cards}</div></div>
-    </body></html>
-    """
+# كلمة سر باش تدخل للادارة - بدلها كيما تحب
+ADMIN_PASSWORD = "matdjar123"
 
-def admin_html():
-    items = ""
-    for p in products:
-        items += f"<div style='display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee'><span>{p['emoji']} {p['name']} - {p['price']}</span><a href='/delete/{p['id']}' style='color:red;text-decoration:none'>حذف</a></div>"
-    return f"""
-    <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ادارة</title></head>
-    <body style="background:#f5f5f5;padding:20px;font-family:Tahoma">
-        <div style="background:white;border-radius:15px;padding:20px;max-width:600px;margin:0 auto 20px">
-            <h2>اضافة منتج جديد</h2>
-            <form method="POST" style="margin-top:15px">
-                <input name="name" placeholder="اسم المنتج" required style="width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:10px">
-                <input name="price" placeholder="السعر 3500 دج" required style="width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:10px">
-                <input name="emoji" placeholder="ايموجي 👗" style="width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:10px">
-                <button style="background:black;color:white;padding:12px;border:none;border-radius:10px;width:100%;font-weight:bold">اضافة</button>
-            </form>
-        </div>
-        <div style="background:white;border-radius:15px;padding:20px;max-width:600px;margin:0 auto">
-            <h3>المنتجات ({len(products)})</h3>{items}
-            <div style="margin-top:15px;text-align:center"><a href="/">رجوع للمتجر ←</a></div>
-        </div>
-    </body></html>
-    """
+# --- 2. قالب المتجر للزبائن ---
+STORE_TEMPLATE = """
+<h1>متجر mat_djar</h1>
+{% for p in products %}
+<div style="border:1px solid #ccc; margin:10px; padding:10px">
+  <h3>{{ p['name'] }}</h3>
+  <p>السعر: {{ p['price'] }} دج</p>
+  <p>{{ p['description'] }}</p>
+</div>
+{% endfor %}
+<a href="/admin">دخول الادارة</a>
+"""
 
-@app.route('/')
-def home(): return page_html()
+# --- 3. قالب الادارة ---
+ADMIN_TEMPLATE = """
+<h1>لوحة التحكم mat_djar</h1>
+<form method="post" action="/admin/add">
+  <input name="name" placeholder="اسم المنتج" required>
+  <input name="price" type="number" placeholder="السعر" required>
+  <input name="description" placeholder="الوصف">
+  <button type="submit">زيد منتج</button>
+</form>
+<hr>
+{% for p in products %}
+<div>
+  {{ p['name'] }} - {{ p['price'] }} دج 
+  <a href="/admin/delete/{{ p['id'] }}" style="color:red"> [حذف] </a>
+</div>
+{% endfor %}
+<a href="/">رجوع للمتجر</a>
+"""
 
-@app.route('/admin', methods=['GET','POST'])
+@app.route("/")
+def store():
+    products = supabase.table("products").select("*").execute().data
+    return render_template_string(STORE_TEMPLATE, products=products)
+
+@app.route("/admin")
 def admin():
-    global products
-    if request.method == 'POST':
-        products.append({"id": len(products)+100, "name": request.form.get('name'), "price": request.form.get('price'), "emoji": request.form.get('emoji') or "📦"})
-        return redirect('/admin')
-    return admin_html()
+    # صفحة تسجيل دخول بسيطة
+    password = request.args.get("password")
+    if password != ADMIN_PASSWORD:
+        return """<form><input name="password" type="password" placeholder="كلمة السر"><button>دخول</button></form> كلمة السر هي: matdjar123"""
+    
+    products = supabase.table("products").select("*").execute().data
+    return render_template_string(ADMIN_TEMPLATE, products=products)
 
-@app.route('/delete/<int:pid>')
-def delete(pid):
-    global products
-    products = [p for p in products if p['id'] != pid]
-    return redirect('/admin')
+@app.route("/admin/add", methods=["POST"])
+def add_product():
+    data = {
+        "name": request.form["name"],
+        "price": int(request.form["price"]),
+        "description": request.form.get("description", "")
+    }
+    supabase.table("products").insert(data).execute()
+    return redirect(f"/admin?password={ADMIN_PASSWORD}")
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT',5000))
-    app.run(host='0.0.0.0',port=port)
+@app.route("/admin/delete/<id>")
+def delete_product(id):
+    supabase.table("products").delete().eq("id", id).execute()
+    return redirect(f"/admin?password={ADMIN_PASSWORD}")
+
+if __name__ == "__main__":
+    app.run()
