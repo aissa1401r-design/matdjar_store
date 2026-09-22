@@ -22,6 +22,25 @@ except Exception as e:
     print(f"Fallback mode: {e}")
     supabase = None
 
+# --- دالة ذكية تعاود المحاولة كل مرة ---
+def get_supabase_client():
+    global supabase
+    # اذا كان خدام من قبل، رجعو
+    if supabase is not None:
+        return supabase
+    # اذا كان طايح، عاود حاول تتصل
+    try:
+        from supabase import create_client
+        URL = os.environ.get("SUPABASE_URL")
+        KEY = os.environ.get("SUPABASE_KEY")
+        if URL and KEY and "YOUR-PROJECT" not in URL:
+            supabase = create_client(URL, KEY)
+            print("✅ تم اعادة الربط مع Supabase بنجاح!")
+            return supabase
+    except Exception as e:
+        print(f"⚠️ مازال Supabase ما كاينش: {e}")
+    return None
+    
 def get_products():
     if supabase:
         try:
