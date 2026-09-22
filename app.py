@@ -1,7 +1,7 @@
 from flask import Flask, render_template_string, request, redirect, jsonify
 import os
 
-app = Flask(name)
+app = Flask(__name__)
 
 FALLBACK_PRODUCTS = [
     {"id": 1, "name": "حذاء عصري", "price": 4500, "description": "متوفر", "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"},
