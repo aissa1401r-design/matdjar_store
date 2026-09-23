@@ -65,6 +65,13 @@ def home():
     cats = turso("SELECT * FROM categories ORDER BY id DESC")
     prods = turso("SELECT * FROM products ORDER BY id DESC")
     return render_template_string(HTML, cats=cats, prods=prods)
+INSERT INTO categories (name) VALUES ('هواتف');
+INSERT INTO categories (name) VALUES ('أحذية');
+INSERT INTO categories (name) VALUES ('ملابس');
+
+INSERT INTO products (name, category_id, image) VALUES ('iPhone 15', 1, 'https://via.placeholder.com/200');
+INSERT INTO products (name, category_id, image) VALUES ('حذاء نايك', 2, 'https://via.placeholder.com/200');
+INSERT INTO products (name, category_id, image) VALUES ('تيشيرت', 3, 'https://via.placeholder.com/200');
 
 if __name__ == "__main__":
     app.run()
