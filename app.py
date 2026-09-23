@@ -29,15 +29,26 @@ turso("CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, name TEXT, c
 HTML = """
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
-<head><meta charset="utf-8"><title>متجر مات جار</title>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>متجر مات جار</title>
 <style>
- body{font-family: Tahoma; background:#f7f7f7; padding:20px; direction:rtl}
-.container{display:flex; gap:20px}
-.cats{width:220px; display:flex; flex-direction:column; gap:10px}
-.cat{background:white; padding:12px; border-radius:8px; text-align:center; font-weight:bold}
-.products{flex:1; display:flex; flex-wrap:wrap; gap:15px; flex-direction:row-reverse; justify-content:flex-start}
-.prod{background:white; width:180px; padding:10px; border-radius:8px; text-align:center}
-.prod img{width:100%; height:120px; object-fit:cover; border-radius:6px}
+ *{box-sizing:border-box; margin:0; padding:0}
+ body{font-family: Tahoma; background:#f1f1f1; direction:rtl; padding:10px}
+ h1{margin:10px 0 20px 0; text-align:center}
+.container{display:flex; gap:15px; flex-direction:column}
+ @media(min-width:768px){.container{flex-direction:row} }
+.cats{order:2}
+ @media(min-width:768px){.cats{order:1; width:220px} }
+.cats h3{margin-bottom:10px; font-size:18px}
+.cat{background:white; padding:15px; border-radius:12px; margin-bottom:10px; text-align:center; font-weight:bold; font-size:16px; box-shadow:0 2px 5px #0001}
+.products{order:1; display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1}
+ @media(min-width:768px){.products{order:2; grid-template-columns:repeat(3, 1fr)} }
+.prod{background:white; border-radius:15px; overflow:hidden; box-shadow:0 2px 8px #0002; text-align:center; padding-bottom:10px}
+.prod img{width:100%; height:180px; object-fit:cover}
+.prod div{padding:10px; font-size:16px; font-weight:bold}
+.seed-btn{display:block; background:#000; color:#fff; text-align:center; padding:12px; border-radius:10px; text-decoration:none; margin:20px 0}
 </style>
 </head>
 <body>
@@ -50,13 +61,13 @@ HTML = """
   <div class="products">
     {% for p in prods %}
     <div class="prod">
-      <img src="{{ p[3]['value'] or 'https://via.placeholder.com/150' }}">
+      <img src="{{ p[3]['value'] or 'https://via.placeholder.com/300' }}">
       <div>{{p[1]['value']}}</div>
     </div>
     {% endfor %}
   </div>
 </div>
-<br><a href="/seed">اضغط هنا لتعمير المتجر</a>
+<a class="seed-btn" href="/seed">تعمير المتجر</a>
 </body>
 </html>
 """
