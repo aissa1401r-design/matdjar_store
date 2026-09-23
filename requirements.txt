@@ -1,4 +1,3 @@
 Flask
 gunicorn
-supabase
-python-dotenv
+libsql-experimental
