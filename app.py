@@ -65,9 +65,10 @@ def logout():
 
 @app.route("/admin/add_cat", methods=["POST"])
 def add_cat():
-    name=request.form.get("name","").replace("'","''")
-    turso(f"INSERT INTO categories (name) VALUES ('{name}')")
-    return redirect("/admin")
+    name = request.form.get("name","").replace("'","''").strip()
+    if name:
+        turso(f"INSERT INTO categories (name) VALUES ('{name}')")
+    return redirect("/admin?msg=تم حفظ النوع ✅&type=cat")
 
 @app.route("/admin/del_cat/<cid>")
 def del_cat(cid):
@@ -77,28 +78,14 @@ def del_cat(cid):
 @app.route("/admin/add_prod", methods=["POST"])
 def add_prod():
     name = request.form.get("name","").replace("'","''").strip()
-    price = request.form.get("price","0").replace("'","")
-    cat_id = request.form.get("cat_id","1").replace("'","")
+    price = request.form.get("price","0").strip() or "0"
+    cat_id = request.form.get("cat_id","1").strip() or "1"
     image = request.form.get("image","").replace("'","").strip()
-
-    # تنظيف cat_id لازم يكون رقم
-    try:
-        int(cat_id)
-    except:
-        cat_id = "1"
-
-    if not name: name = "منتج"
     if not image: image = "https://via.placeholder.com/400"
-
-    sql = f"INSERT INTO products (name, category_id, image, price) VALUES ('{name}', {cat_id}, '{image}', {price})"
-    result = turso(sql)
-
-    # اذا كاين خطأ نوريهولك بوضوح
-    if isinstance(result, dict) or isinstance(result, str):
-        return f"<h1>خطأ في القاعدة</h1><pre>{result}</pre><p>SQL: {sql}</p><a href='/admin'>رجوع</a>"
-
-    return redirect("/admin")
-
+    if not name: name = "منتج"
+    turso(f"INSERT INTO products (name, category_id, image, price) VALUES ('{name}', {cat_id}, '{image}', {price})")
+    return redirect(f"/admin?msg=تم حفظ المنتج: {name} ✅&type=prod")
+    
 @app.route("/admin/del_prod/<pid>")
 def del_prod(pid):
     turso(f"DELETE FROM products WHERE id={pid}")
