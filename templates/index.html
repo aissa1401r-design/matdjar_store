@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>متجر مات جار</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<h1>متجر مات جار</h1>
+<div class="container">
+  <div class="cats">
+    <h3>الأنواع من الفوق للتحت</h3>
+    {% for c in cats %}<div class="cat">{{ c[1] }}</div>{% endfor %}
+  </div>
+  <div class="products">
+    {% for p in prods %}
+    <div class="prod">
+      <img src="{{ p[3] }}">
+      <div class="name">{{ p[1] }}<br><small>{{ p[4] }} دج</small></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<a class="admin-btn" href="/admin">الإدارة ⚙️</a>
+</body>
+</html>
