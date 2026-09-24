@@ -64,8 +64,31 @@ def del_cat(cid):
 
 @app.route("/admin/add_prod", methods=["POST"])
 def add_prod():
-    name=request.form.get("name","").replace("'","")
-    turso(f"INSERT INTO products (name, category_id, image, price) VALUES ('{name}', {request.form.get('cat_id')}, '{request.form.get('image')}', {request.form.get('price') or 0})")
+    if not session.get("admin"): return redirect("/login")
+    try:
+        name = request.form.get("name","").replace("'","").strip()
+        cat_id = request.form.get("cat_id")
+        image = request.form.get("image","").replace("'","").strip()
+        price = request.form.get("price") or "0"
+
+        # اذا ما كانش نوع، نجيبو أول نوع كاين
+        if not cat_id:
+            cats = turso("SELECT id FROM categories LIMIT 1")
+            if cats:
+                cat_id = cats[0][0]
+            else:
+                turso("INSERT INTO categories (name) VALUES ('عام')")
+                cats = turso("SELECT id FROM categories LIMIT 1")
+                cat_id = cats[0][0]
+
+        if not name or not image:
+            return "الاسم والصورة ضروريين - ارجع للخلف"
+
+        turso(f"INSERT INTO products (name, category_id, image, price) VALUES ('{name}', {cat_id}, '{image}', {price})")
+        print(f"ADDED PRODUCT: {name}")
+    except Exception as e:
+        print(f"ERROR ADDING PRODUCT: {e}")
+        return f"خطأ: {e} <br><a href='/admin'>رجوع</a>"
     return redirect("/admin")
 
 @app.route("/admin/del_prod/<pid>")
