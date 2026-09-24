@@ -1,24 +1,52 @@
-<!DOCTYPE html>
-<html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>الإدارة</title>
-<style>body{font-family:Tahoma;background:#f5f5f5;direction:rtl;padding:15px}.box{max-width:500px;margin:auto;background:#fff;padding:20px;border-radius:15px;box-shadow:0 2px 10px #0002}input,select{width:100%;padding:14px;margin:8px 0;border:2px solid #000;border-radius:8px;font-size:16px;box-sizing:border-box}button{width:100%;padding:15px;background:#000;color:#fff;font-weight:bold;border-radius:8px;font-size:18px;margin-top:10px}label{font-weight:bold;display:block;margin-top:12px}</style></head><body>
+<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>الإدارة</title>
+<style>body{font-family:Tahoma;background:#f5f5f5;direction:rtl;padding:15px}.box{max-width:500px;margin:auto;background:#fff;padding:20px;border-radius:15px}input,select{width:100%;padding:14px;margin:8px 0;border:2px solid #000;border-radius:8px;box-sizing:border-box}button{width:100%;padding:14px;color:#fff;font-weight:bold;border-radius:8px;margin-top:5px}.alert{padding:15px;border-radius:10px;margin:10px 0;font-weight:bold;text-align:center;font-size:18px}.ok{background:#d4edda;color:#155724;border:2px solid #155724}.card{background:#eee;padding:10px;border-radius:8px;margin:5px 0;display:flex;justify-content:space-between;align-items:center}.prod-card{display:flex;gap:10px;align-items:center;background:#f9f9f9;padding:8px;border-radius:8px;margin:5px 0;border:1px solid #ddd}.prod-card img{width:50px;height:50px;object-fit:cover;border-radius:6px}</style></head><body>
 <div class="box">
-<h2>إضافة منتج جديد</h2>
-<form method="post" action="/admin/add_prod">
-<label>1 - اسم المنتج (مثال: قميص)</label>
-<input name="name" type="text" placeholder="قميص" required>
 
-<label>2 - السعر (مثال: 2500)</label>
-<input name="price" type="number" placeholder="2500" required>
+<!-- رسالة الحفظ -->
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const msg = urlParams.get('msg');
+if(msg){
+  document.write(<div class="alert ok">${msg}</div>);
+}
+</script>
 
-<label>3 - اختر النوع</label>
-<select name="cat_id" required>
-{% for c in cats %}<option value="{{c[0]}}">{{c[1]}}</option>{% else %}<option value="1">عام</option>{% endfor %}
-</select>
-
-<label>4 - رابط الصورة</label>
-<input name="image" type="url" value="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400" required>
-
-<button>حفظ المنتج ✅</button>
+<div style="background:#eef;padding:15px;border-radius:10px;border:2px dashed #000">
+<h3 style="margin:0">1️⃣ زيادة نوع جديد</h3>
+<form method="post" action="/admin/add_cat">
+<input name="name" placeholder="مثلا: أحذية" required>
+<button style="background:#0a7">حفظ النوع ✅</button>
 </form>
-<br><a href="/">← للمتجر</a> | <a href="/seed">تصفير</a>
+{% for c in cats %}
+<div class="card"><span>{{c[1]}}</span><a href="/admin/del_cat/{{c[0]}}" style="color:red">حذف</a></div>
+{% endfor %}
+</div>
+
+<hr style="margin:20px 0">
+
+<div style="background:#fff7e0;padding:15px;border-radius:10px;border:2px solid #000">
+<h3 style="margin:0">2️⃣ زيادة منتج جديد</h3>
+<form method="post" action="/admin/add_prod">
+<label>اسم المنتج</label><input name="name" placeholder="قميص" required>
+<label>السعر</label><input name="price" type="number" placeholder="5500" required>
+<label>اختر النوع</label><select name="cat_id">{% for c in cats %}<option value="{{c[0]}}">{{c[1]}}</option>{% endfor %}</select>
+<label>رابط الصورة</label><input name="image" value="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400" required>
+<button style="background:#000">حفظ المنتج ✅</button>
+</form>
+</div>
+
+<!-- عرض السلع المحفوظة -->
+<h3 style="margin-top:20px">📦 السلع المحفوظة حاليا ({{ prods|length }})</h3>
+{% if not prods %}
+<p style="color:#888">ماكان حتى سلعة مزال</p>
+{% endif %}
+{% for p in prods %}
+<div class="prod-card">
+<img src="{{p[3]}}" onerror="this.src='https://via.placeholder.com/50'">
+<div style="flex:1"><b>{{p[1]}}</b><br><small>السعر: {{p[4]}} دج - النوع ID: {{p[2]}}</small></div>
+<a href="/admin/del_prod/{{p[0]}}" style="color:red;font-weight:bold">X</a>
+</div>
+{% endfor %}
+
+<br><a href="/">← للمتجر</a> | <a href="/reset" style="color:red">تصفير</a>
 </div></body></html>
