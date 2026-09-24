@@ -1,35 +1,24 @@
 import os, requests
 from flask import Flask, render_template, request, redirect, session
 app = Flask(__name__)
-app.secret_key = "matdjar-secret-123"
+app.secret_key = "matdjar-123"
 
 TURSO_URL = os.getenv("TURSO_DATABASE_URL","").replace("libsql://","https://")
 TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN")
 ADMIN_PASS = os.getenv("ADMIN_PASSWORD","1234")
 
 def turso(sql):
-    print(f"SQL: {sql}")
-    if not TURSO_URL or not TURSO_TOKEN: return []
+    if not TURSO_URL: return []
     try:
         r = requests.post(f"{TURSO_URL}/v2/pipeline",
             headers={"Authorization": f"Bearer {TURSO_TOKEN}", "Content-Type":"application/json"},
             json={"requests":[{"type":"execute","stmt":{"sql":sql}},{"type":"close"}]})
-        data = r.json()
-        # لو كاين خطأ من Turso
-        if 'results' not in data:
-            print(f"TURSO FULL ERROR: {data}")
-            return data
-        res = data['results'][0]
-        if 'response' not in res or 'result' not in res['response']:
-            print(f"TURSO ERROR RES: {res}")
-            return res
-        rows = res['response']['result'].get('rows', [])
-        if not rows:
-            return []
+        j = r.json()
+        rows = j['results'][0]['response']['result'].get('rows', [])
         return [[c.get('value') for c in row] for row in rows]
     except Exception as e:
-        print(f"EXCEPTION: {e}")
-        return str(e)
+        print("ERROR", e)
+        return []
 
 turso("CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY, name TEXT)")
 turso("CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, name TEXT, category_id INTEGER, image TEXT, price REAL)")
@@ -38,8 +27,6 @@ turso("CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, name TEXT, c
 def home():
     cats = turso("SELECT * FROM categories ORDER BY id DESC")
     prods = turso("SELECT * FROM products ORDER BY id DESC")
-    if isinstance(cats, dict) or isinstance(cats, str): cats = []
-    if isinstance(prods, dict) or isinstance(prods, str): prods = []
     return render_template("index.html", cats=cats, prods=prods)
 
 @app.route("/admin")
@@ -47,8 +34,6 @@ def admin():
     if not session.get("admin"): return redirect("/login")
     cats = turso("SELECT * FROM categories ORDER BY id DESC")
     prods = turso("SELECT * FROM products ORDER BY id DESC")
-    if isinstance(cats, dict) or isinstance(cats, str): cats = []
-    if isinstance(prods, dict) or isinstance(prods, str): prods = []
     return render_template("admin.html", cats=cats, prods=prods)
 
 @app.route("/login", methods=["GET","POST"])
@@ -66,9 +51,8 @@ def logout():
 @app.route("/admin/add_cat", methods=["POST"])
 def add_cat():
     name = request.form.get("name","").replace("'","''").strip()
-    if name:
-        turso(f"INSERT INTO categories (name) VALUES ('{name}')")
-    return redirect("/admin?msg=تم حفظ النوع ✅&type=cat")
+    if name: turso(f"INSERT INTO categories (name) VALUES ('{name}')")
+    return redirect("/admin?msg=تم حفظ النوع ✅")
 
 @app.route("/admin/del_cat/<cid>")
 def del_cat(cid):
@@ -84,18 +68,25 @@ def add_prod():
     if not image: image = "https://via.placeholder.com/400"
     if not name: name = "منتج"
     turso(f"INSERT INTO products (name, category_id, image, price) VALUES ('{name}', {cat_id}, '{image}', {price})")
-    return redirect(f"/admin?msg=تم حفظ المنتج: {name} ✅&type=prod")
-    
+    return redirect(f"/admin?msg=تم حفظ المنتج: {name} ✅")
+
 @app.route("/admin/del_prod/<pid>")
 def del_prod(pid):
     turso(f"DELETE FROM products WHERE id={pid}")
     return redirect("/admin")
 
+@app.route("/reset")
+def reset():
+    turso("DROP TABLE IF EXISTS products")
+    turso("DROP TABLE IF EXISTS categories")
+    turso("CREATE TABLE categories (id INTEGER PRIMARY KEY, name TEXT)")
+    turso("CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, category_id INTEGER, image TEXT, price REAL)")
+    turso("INSERT INTO categories (name) VALUES ('ملابس')")
+    return "تم التصفير ✅ - <a href='/admin'>روح للإدارة</a>"
+
 @app.route("/seed")
 def seed():
-    turso("DELETE FROM products"); turso("DELETE FROM categories")
-    turso("INSERT INTO categories (id, name) VALUES (1, 'عام')")
-    return redirect("/admin")
-@app.route("/debug")
-def debug():
-    return f"Cats: {turso('SELECT * FROM categories')} <br> Prods: {turso('SELECT * FROM products')}"
+    return redirect("/reset")
+
+if __name__ == "__main__":
+    app.run()
