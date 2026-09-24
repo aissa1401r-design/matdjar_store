@@ -1,0 +1,18 @@
+<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الإدارة</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<h1>لوحة الإدارة <a href="/logout" style="float:left">خروج</a></h1>
+<h2>➕ زيد نوع</h2>
+<form method="post" action="/admin/add_cat"><input name="name" placeholder="اسم النوع" required><button>حفظ النوع</button></form>
+{% for c in cats %}<div class="card"><div style="flex:1">{{c[1]}}</div><a class="del" href="/admin/del_cat/{{c[0]}}">حذف</a></div>{% endfor %}
+<h2>➕ زيد منتج</h2>
+<form method="post" action="/admin/add_prod">
+<input name="name" placeholder="اسم المنتج" required>
+<input name="price" type="number" placeholder="السعر">
+<select name="cat_id">{% for c in cats %}<option value="{{c[0]}}">{{c[1]}}</option>{% endfor %}</select>
+<input name="image" placeholder="رابط الصورة" required>
+<button>حفظ المنتج</button>
+</form>
+<h2>المنتجات</h2>
+{% for p in prods %}<div class="card"><img src="{{p[3]}}"><div style="flex:1">{{p[1]}}</div><a class="del" href="/admin/del_prod/{{p[0]}}">حذف</a></div>{% endfor %}
+<a href="/">← للمتجر</a>
+</body></html>
